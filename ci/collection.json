@@ -1,0 +1,141 @@
+{
+	"info": {
+		"name": "register-ticket",
+		"_postman_id": "8710fbab-532f-47bc-79f2-fec3e6029e41",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "register-ticket",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Echo - Correct HTTP Code\", function() {",
+							"    pm.response.to.have.status(200);",
+							"})",
+							"",
+							"pm.test(\"Echo - Received JSON back\", function() {",
+							"    pm.response.to.be.json;",
+							"})",
+							"",
+							"// pm.test(\"Echo - Response equals Query\", function () {",
+							"//     var jsonData = pm.response.json();",
+							"//     var expectedResult = pm.environment.get(\"test-string\");",
+							"//     pm.expect(jsonData.test).to.eql(expectedResult);",
+							"// });",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.environment.set(\"ticket-id\", \"123456789\");",
+							"pm.environment.set(\"ticket-id\", \"123456789\");",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"ticket\": {\n    \"comment\": {\n      \"html_body\": \"<p><b>If there has been any recent maintenance carried out on your home, please describe it</b> : No maintenance carried out</p><hr><p><b>If you have any other insurance or warranties covering your home, please advise us of the company name.</b> : No</p><hr><p><b>We have made the following assumptions about your property, you and anyone living with you</b> : </p><hr><p><b>When did the incident happen?</b> : 2017-01-01</p><hr><p><b>Are you still have possession of the damage items (i.e. damaged guttering)?</b> : </p><hr><p><b>Are you aware of anything else relevant to your claim that you would like to advise us of at this stage?</b> : I would need the vendors contact for repairing the roof</p><hr><p><b>Would you like to upload more images?</b> : </p><hr><p><b>Where did the incident happen? (City/town name)</b> : birmingham</p><hr><p><b>In as much detail as possible, please use the text box below to describe the full extent of the damage to your home and how you discovered it.</b> : Roof Damaged</p><hr><p><b>Please describe the details of the condition of your home prior to discovering the damage</b> : Tiles blown away</p><hr>\"\n    },\n    \"custom_fields\": [\n      {\n        \"id\": 114100596852,\n        \"value\": \"28\"\n      },\n      {\n        \"id\": 114099964311,\n        \"value\": \"TV\"\n      },\n      {\n        \"id\": 114100712171,\n        \"value\": \"50 : Possible Stormy weather\"\n      },\n      {\n        \"id\": 114100658992,\n        \"value\": \"09876512345\"\n      },\n      {\n        \"id\": 114100659172,\n        \"value\": \"amitkumarvarman@gmail.com\"\n      }\n    ],\n    \"requester\": {\n      \"locale_id\": 1,\n      \"name\": \"Amit Varman\",\n      \"email\": \"amitkumarvarman@gmail.com\"\n    },\n    \"email\": \"amitkumarvarman@gmail.com\",\n    \"phone\": \"09876512345\",\n    \"priority\": \"normal\",\n    \"status\": \"new\",\n    \"subject\": \"TV claim\",\n    \"type\": \"incident\",\n    \"ticket_form_id\": 114093998312\n  }\n}\n"
+				},
+				"url": {
+					"raw": "http://fission.landg.madeden.net/register-ticket",
+					"protocol": "http",
+					"host": [
+						"fission",
+						"landg",
+						"madeden",
+						"net"
+					],
+					"path": [
+						"register-ticket"
+					]
+				},
+				"description": "Simple echo test"
+			},
+			"response": [
+				{
+					"id": "8b08a1de-604f-4c0b-9c00-19b6e26ac4f5",
+					"name": "echo-test",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"test\": \"echo test\" } "
+						},
+						"url": {
+							"raw": "http://fission.landg.madeden.net/echo",
+							"protocol": "http",
+							"host": [
+								"fission",
+								"landg",
+								"madeden",
+								"net"
+							],
+							"path": [
+								"echo"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Content-Length",
+							"value": "26",
+							"name": "Content-Length",
+							"description": ""
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json",
+							"name": "Content-Type",
+							"description": ""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 25 Oct 2017 08:59:09 GMT",
+							"name": "Date",
+							"description": ""
+						},
+						{
+							"key": "Server",
+							"value": "Werkzeug/0.12.2 Python/3.5.2",
+							"name": "Server",
+							"description": ""
+						}
+					],
+					"cookie": [],
+					"responseTime": "34",
+					"body": "{\n  \"test\": \"echo test\"\n}\n"
+				}
+			]
+		}
+	]
+}
