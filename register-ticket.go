@@ -47,13 +47,6 @@ var (
 func Handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Executing Register Ticket API end point...", endPoint)
-	// validate request body
-	if r.Body == nil {
-		http.Error(w, "Please send a valid JSON", 400)
-		createErrorResponse(w, "Please send a valid JSON", 400)
-		return
-	}
-
 	//get API keys
 	getAPIKeys(w)
 
@@ -63,10 +56,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	client := &http.Client{}
 	zendeskAPIResp, err := client.Do(req)
-
 	if err != nil {
-		http.Error(w, err.Error(), 400)
-		createErrorResponse(w, err.Error(), 400)
+		createErrorResponse(w, err.Error(), zendeskAPIResp.Status)
 		return
 	}
 
@@ -74,9 +65,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	var ticketResponse TicketResponse
 	err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		createErrorResponse(w, err.Error(), 400)
+	if err != nil || ticketResponse.Audit.ID == 0 {
+		createErrorResponse(w, err.Error(), "400")
 		return
 	}
 	defer zendeskAPIResp.Body.Close()
@@ -86,7 +76,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ticketResponseJSON, err := json.Marshal(&ticketAuditData)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
-		createErrorResponse(w, err.Error(), 400)
+		createErrorResponse(w, err.Error(), "400")
 		return
 	}
 
@@ -94,7 +84,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ticketResponseJSON))
 }
 
-func createErrorResponse(w http.ResponseWriter, message string, status int64) {
+func createErrorResponse(w http.ResponseWriter, message string, status string) {
 	errorJSON, _ := json.Marshal(&Error{
 		Code:    status,
 		Message: message})
@@ -104,7 +94,7 @@ func createErrorResponse(w http.ResponseWriter, message string, status int64) {
 }
 
 type Error struct {
-	Code    int64  `json:"status"`
+	Code    string `json:"status"`
 	Message string `json:"message"`
 }
 
@@ -140,36 +130,36 @@ func getAPIKeys(w http.ResponseWriter) {
 	// 	endPoint = endPointFromENV
 	// }
 	if len(apiKey) == 0 {
-		createErrorResponse(w, "Missing API Key", 400)
+		createErrorResponse(w, "Missing API Key", "400")
 	}
 	if len(apiPassword) == 0 {
-		createErrorResponse(w, "Missing API Password", 400)
+		createErrorResponse(w, "Missing API Password", "400")
 	}
 
 }
 
 type TicketResponse struct {
 	Ticket struct {
-		URL        string      `json:"url"`
-		ID         int         `json:"id"`
-		ExternalID interface{} `json:"external_id"`
+		URL        string      `json:"url,omitempty"`
+		ID         int         `json:"id,omitempty"`
+		ExternalID interface{} `json:"external_id,omitempty"`
 
-		CreatedAt    time.Time   `json:"created_at"`
-		UpdatedAt    time.Time   `json:"updated_at"`
-		DueAt        interface{} `json:"due_at"`
-		TicketFormID int64       `json:"ticket_form_id"`
+		CreatedAt    time.Time   `json:"created_at,omitempty"`
+		UpdatedAt    time.Time   `json:"updated_at,omitempty"`
+		DueAt        interface{} `json:"due_at,omitempty"`
+		TicketFormID int64       `json:"ticket_form_id,omitempty"`
 	} `json:"ticket"`
 	Audit struct {
-		ID        int64     `json:"id"`
-		TicketID  int       `json:"ticket_id"`
-		CreatedAt time.Time `json:"created_at"`
-		AuthorID  int64     `json:"author_id"`
+		ID        int64     `json:"id,omitempty"`
+		TicketID  int       `json:"ticket_id,omitempty"`
+		CreatedAt time.Time `json:"created_at,omitempty"`
+		AuthorID  int64     `json:"author_id,omitempty"`
 		Metadata  struct {
 			System struct {
-				IPAddress string  `json:"ip_address"`
-				Location  string  `json:"location"`
-				Latitude  float64 `json:"latitude"`
-				Longitude float64 `json:"longitude"`
+				IPAddress string  `json:"ip_address,omitempty"`
+				Location  string  `json:"location,omitempty"`
+				Latitude  float64 `json:"latitude,omitempty"`
+				Longitude float64 `json:"longitude,omitempty"`
 			} `json:"system"`
 			Custom struct {
 			} `json:"custom"`
