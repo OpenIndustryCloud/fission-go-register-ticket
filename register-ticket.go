@@ -65,7 +65,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	var ticketResponse TicketResponse
 	err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
-	if err != nil || ticketResponse.Audit.ID == 0 {
+	if err != nil || ticketResponse == (TicketResponse{}) {
 		createErrorResponse(w, err.Error(), "400")
 		return
 	}
@@ -98,11 +98,11 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// func main() {
-// 	fmt.Println("staritng app..")
-// 	http.HandleFunc("/", Handler)
-// 	http.ListenAndServe(":8085", nil)
-// }
+func main() {
+	fmt.Println("staritng app..")
+	http.HandleFunc("/", Handler)
+	http.ListenAndServe(":8085", nil)
+}
 
 func getAPIKeys(w http.ResponseWriter) {
 	fmt.Println("[CONFIG] Reading Env variables")
@@ -119,7 +119,7 @@ func getAPIKeys(w http.ResponseWriter) {
 	}
 
 	secret, err := clientset.Core().Secrets(namesapce).Get(secretName, meta_v1.GetOptions{})
-	fmt.Println("Zen Desk API Key : " + string(secret.Data[apiKey]))
+	fmt.Println(len(string(secret.Data[apiKey])))
 
 	//endPointFromENV := os.Getenv("ENV_HELPDESK_API_EP")
 	apiKey = string(secret.Data["apiKey"])
