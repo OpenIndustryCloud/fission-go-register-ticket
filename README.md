@@ -1,4 +1,7 @@
-# Go examples
+# Register Ticket
+
+[![Coverage Status](https://coveralls.io/repos/github/OpenIndustryCloud/fission-go-register-ticket/badge.svg?branch=master)](https://coveralls.io/github/OpenIndustryCloud/fission-go-register-ticket?branch=master)
+
 
 The `go` runtime uses the [`plugin` package](https://golang.org/pkg/plugin/) to dynamically load an HTTP handler.
 
@@ -43,9 +46,6 @@ $ curl -d '{--INPUT JSON--}' -H "Content-Type: application/json" -X POST http://
 
 ##Code Coverage
 
-[![Coverage Status](https://coveralls.io/repos/github/OpenIndustryCloud/fission-go-register-ticket/badge.svg?branch=master)](https://coveralls.io/github/OpenIndustryCloud/fission-go-register-ticket?branch=master)
 
-#HTML Report
-<a href='https://coveralls.io/github/OpenIndustryCloud/fission-go-register-ticket?branch=master'><img src='https://coveralls.io/repos/github/OpenIndustryCloud/fission-go-register-ticket/badge.svg?branch=master' alt='Coverage Status' /></a>
 
 ```
