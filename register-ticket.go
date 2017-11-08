@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,7 +62,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if zendeskAPIResp.Status != "201" {
+	if strings.Compare(zendeskAPIResp.Status, "201 Created") != 0 {
 		fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
 		createErrorResponse(w, "error creating tickets", zendeskAPIResp.Status)
 		return
