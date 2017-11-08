@@ -61,7 +61,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
+	if zendeskAPIResp.Status != "201" {
+		fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
+		createErrorResponse(w, "error creating tickets", zendeskAPIResp.Status)
+		return
+	}
 
 	var ticketResponse TicketResponse
 	err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
@@ -75,7 +79,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ticketAuditData := ticketResponse.Audit
 	ticketResponseJSON, err := json.Marshal(&ticketAuditData)
 	if err != nil {
-		http.Error(w, err.Error(), 400)
 		createErrorResponse(w, err.Error(), "400")
 		return
 	}
@@ -98,11 +101,11 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-func main() {
-	fmt.Println("staritng app..")
-	http.HandleFunc("/", Handler)
-	http.ListenAndServe(":8085", nil)
-}
+// func main() {
+// 	fmt.Println("staritng app..")
+// 	http.HandleFunc("/", Handler)
+// 	http.ListenAndServe(":8085", nil)
+// }
 
 func getAPIKeys(w http.ResponseWriter) {
 	fmt.Println("[CONFIG] Reading Env variables")
