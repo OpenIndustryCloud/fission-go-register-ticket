@@ -61,11 +61,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
+	if zendeskAPIResp.Status != "201" {
+		fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
+		createErrorResponse(w, "error creating tickets", zendeskAPIResp.Status)
+		return
+	}
 
 	var ticketResponse TicketResponse
 	err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
-	if err != nil || ticketResponse.Audit.ID == 0 {
+	if err != nil || ticketResponse == (TicketResponse{}) {
 		createErrorResponse(w, err.Error(), "400")
 		return
 	}
@@ -75,7 +79,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ticketAuditData := ticketResponse.Audit
 	ticketResponseJSON, err := json.Marshal(&ticketAuditData)
 	if err != nil {
-		http.Error(w, err.Error(), 400)
 		createErrorResponse(w, err.Error(), "400")
 		return
 	}
@@ -119,7 +122,7 @@ func getAPIKeys(w http.ResponseWriter) {
 	}
 
 	secret, err := clientset.Core().Secrets(namesapce).Get(secretName, meta_v1.GetOptions{})
-	fmt.Println("Zen Desk API Key : " + string(secret.Data[apiKey]))
+	fmt.Println(len(string(secret.Data[apiKey])))
 
 	//endPointFromENV := os.Getenv("ENV_HELPDESK_API_EP")
 	apiKey = string(secret.Data["apiKey"])
