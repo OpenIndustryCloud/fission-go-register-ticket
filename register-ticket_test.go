@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,10 +35,10 @@ func TestHandler(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
+		want int
 	}{
-		{"Test Data", args{rr, req}, ""},
-		{"Test Data", args{rr, reqMalformed}, ""},
+		{"Test Data-1", args{rr, req}, 12},
+		{"Test Data-2", args{rr, reqMalformed}, 0},
 	}
 	for _, tt := range tests {
 		// call ServeHTTP method
@@ -55,13 +57,15 @@ func TestHandler(t *testing.T) {
 				ctype, "application/json")
 		}
 		// check the output
-		// res, err := ioutil.ReadAll(rr.Body)
-		// if err != nil {
-		// 	t.Error(err) //Something is wrong while read res
-		// }
-		// got := string(res)
-		// if got != tt.want {
-		// 	t.Errorf("%q. compute weather risk() = %v, want %v", tt.name, got, tt.want)
-		// }
+		res, err := ioutil.ReadAll(rr.Body)
+		if err != nil {
+			t.Error(err) //Something is wrong while read res
+		}
+		got := TicketResponse{}
+		err = json.Unmarshal(res, &got)
+
+		if err != nil && got.Audit.TicketID == tt.want {
+			t.Errorf("%q. compute weather risk() = %v, want %v", tt.name, got.Audit.TicketID, tt.want)
+		}
 	}
 }
