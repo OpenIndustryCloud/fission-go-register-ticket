@@ -25,7 +25,6 @@ OUTPUT - Ticket Meta Data JSON from Response Object
 */
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -47,7 +46,7 @@ var (
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("Executing Register Ticket API end point...", endPoint)
+	println("Executing Register Ticket API end point...", endPoint)
 	//get API keys
 	getAPIKeys(w)
 
@@ -58,20 +57,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	zendeskAPIResp, err := client.Do(req)
 	if err != nil {
-		createErrorResponse(w, err.Error(), zendeskAPIResp.Status)
+		createErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if strings.Compare(zendeskAPIResp.Status, "201 Created") != 0 {
-		fmt.Println("request status for ticket creation :" + zendeskAPIResp.Status)
-		createErrorResponse(w, "error creating tickets", zendeskAPIResp.Status)
+		println("request status for ticket creation :" + zendeskAPIResp.Status)
+		createErrorResponse(w, "error creating tickets", http.StatusBadRequest)
 		return
 	}
 
 	var ticketResponse TicketResponse
 	err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
 	if err != nil || ticketResponse == (TicketResponse{}) {
-		createErrorResponse(w, err.Error(), "400")
+		createErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer zendeskAPIResp.Body.Close()
@@ -80,7 +79,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ticketAuditData := ticketResponse.Audit
 	ticketResponseJSON, err := json.Marshal(&ticketAuditData)
 	if err != nil {
-		createErrorResponse(w, err.Error(), "400")
+		createErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -88,28 +87,29 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ticketResponseJSON))
 }
 
-func createErrorResponse(w http.ResponseWriter, message string, status string) {
+func createErrorResponse(w http.ResponseWriter, message string, status int) {
 	errorJSON, _ := json.Marshal(&Error{
-		Code:    status,
+		Status:  status,
 		Message: message})
-
+	//Send custom error message to caller
+	w.WriteHeader(status)
 	w.Header().Set("content-type", "application/json")
 	w.Write([]byte(errorJSON))
 }
 
 type Error struct {
-	Code    string `json:"status"`
+	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
 
 // func main() {
-// 	fmt.Println("staritng app..")
+// 	println("staritng app..")
 // 	http.HandleFunc("/", Handler)
 // 	http.ListenAndServe(":8085", nil)
 // }
 
 func getAPIKeys(w http.ResponseWriter) {
-	fmt.Println("[CONFIG] Reading Env variables")
+	println("[CONFIG] Reading Env variables")
 
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
@@ -123,7 +123,7 @@ func getAPIKeys(w http.ResponseWriter) {
 	}
 
 	secret, err := clientset.Core().Secrets(namesapce).Get(secretName, meta_v1.GetOptions{})
-	fmt.Println(len(string(secret.Data[apiKey])))
+	println(len(string(secret.Data["apiKey"])))
 
 	//endPointFromENV := os.Getenv("ENV_HELPDESK_API_EP")
 	apiKey = string(secret.Data["apiKey"])
@@ -134,10 +134,10 @@ func getAPIKeys(w http.ResponseWriter) {
 	// 	endPoint = endPointFromENV
 	// }
 	if len(apiKey) == 0 {
-		createErrorResponse(w, "Missing API Key", "400")
+		createErrorResponse(w, "Missing API Key", http.StatusBadRequest)
 	}
 	if len(apiPassword) == 0 {
-		createErrorResponse(w, "Missing API Password", "400")
+		createErrorResponse(w, "Missing API Password", http.StatusBadRequest)
 	}
 
 }
