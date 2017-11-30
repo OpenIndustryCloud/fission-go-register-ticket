@@ -64,8 +64,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		createErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	println("Submission ID to be validated ---> " + ticketDetails.Ticket.EventID)
+
 	//check if ticker registered for this submission
-	if validateRecord(w, ticketDetails.Ticket.EventID) > 0 {
+	if validateRecord(w, ticketDetails.Ticket.EventID) == 1 {
 		//get API keys
 		getAPIKeys(w)
 
@@ -109,7 +112,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ticketResponseJSON))
 }
 
+//this function stores submissionID to Redis DB
+// in a SET, return 1 if inserted , 0 if already exists
 func validateRecord(w http.ResponseWriter, submissionID string) int {
+
+	println("Validating if record exist for submissionID", submissionID)
 
 	if submissionID == "" {
 		return 1 //cannot validate
@@ -118,14 +125,15 @@ func validateRecord(w http.ResponseWriter, submissionID string) int {
 	conn, err := redis.Dial(TCP, REDIS_SERVER)
 	if err != nil {
 		println("unable to create Redis Connection", err.Error())
-		return 1 //cannot validate
+		createErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return 0 //cannot validate
 	}
 	defer conn.Close()
 	noOfRecord, err := conn.Cmd("SADD", "submissionID", submissionID).Int()
 	// Check the Err field of the *Resp object for any errors.
 	if err != nil {
-		println("unable to add data to DB", err.Error())
-		return 1 //cannot validate
+		createErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return 0 //cannot validate
 	}
 	println("no of record added to redis DB : ", noOfRecord)
 	return noOfRecord
