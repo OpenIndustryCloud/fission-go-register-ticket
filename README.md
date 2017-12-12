@@ -1,9 +1,10 @@
-# Register Ticket APi
-
-
-`register-ticket.go` is an API which accepts JSON payload compliant to Zen Deks and creates Ticket with the Payload
-
 [![Coverage Status](https://coveralls.io/repos/github/OpenIndustryCloud/fission-go-register-ticket/badge.svg?branch=master)](https://coveralls.io/github/OpenIndustryCloud/fission-go-register-ticket?branch=master)
+
+
+# Register Ticket API
+
+
+`register-ticket.go` is an API which accepts JSON payload compliant to [Zendesk](https://www.zendesk.com/) and creates Ticket with the Payload Data
 
 
 ## Zendesk API reference
@@ -15,13 +16,13 @@ Authentication is implemented using API token, you can either configure a [Secre
 or  have it directly configured within the API (not recommended as it exposes your secrets)
 
 apiKey field should be - {enduser_email_address}/token
+
 apiToken should be - {api_token}
 
 
 ## Error hanlding
 - Technical error : `{"status":400,"message":"Error specific message"}`
 - Duplicate Attempt Warning : `{"status":208,"message":"ticket Already created"}`
-- 
 
 ## Sample Input/Output
 
@@ -34,10 +35,13 @@ apiToken should be - {api_token}
 
 ### API Response
 
-```{"id":133382282992,"ticket_id":39,"created_at":"2017-10-25T18:32:55Z","author_id":115428050612,"metadata":{"system":{"ip_address":"2.122.25.146","location":"Solihull, M2, United Kingdom","latitude":52.41669999999999,"longitude":-1.783299999999997},"custom":{}}}
-```
+On succesful call, API will create a ticket in Zendesk and return Ticket Meta Data
 
-## Requirements
+{"id":133382282992,"ticket_id":39,"created_at":"2017-10-25T18:32:55Z","author_id":115428050612,"metadata":{"system":{"ip_address":"2.122.25.146","location":"Solihull, M2, United Kingdom","latitude":52.41669999999999,"longitude":-1.783299999999997},"custom":{}}}
+
+# Example Usage
+
+1.  Deploy as Fission Functions
 
 First, set up your fission deployment with the go environment.
 
@@ -49,9 +53,8 @@ To ensure that you build functions using the same version as the
 runtime, fission provides a docker image and helper script for
 building functions.
 
-# Example Usage
 
-## Deploy as Fission Functions
+
 ### Download the build helper script
 $ curl https://raw.githubusercontent.com/fission/fission/master/environments/go/builder/go-function-build > go-function-build
 $ chmod +x go-function-build
@@ -66,4 +69,6 @@ $ fission function create --name register-ticket --env go-env --package function
 $ fission route create --method POST --url /register-ticket --function register-ticket
 
 ### Run the function
-$ curl -d '--INPUT JSON--' -H "Content-Type: application/json" -X POST http://$FISSION_ROUTER/register-ticket
+$ curl -d `{"ticket": {"subject": "My printer is on fire!", "comment": {"body": "The smoke is very colorful."}}}` -H "Content-Type: application/json" -X POST http://$FISSION_ROUTER/register-ticket
+
+2. Deploy as AWS Lambda
