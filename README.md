@@ -55,20 +55,23 @@ building functions.
 
 
 
-### Download the build helper script
+- Download the build helper script
+
+```
 $ curl https://raw.githubusercontent.com/fission/fission/master/environments/go/builder/go-function-build > go-function-build
 $ chmod +x go-function-build
+```
 
-### Build the function as a plugin. Outputs result to 'function.so'
-$ go-function-build register-ticket.go
+- Build the function as a plugin. Outputs result to 'function.so'
+`$ go-function-build register-ticket.go`
 
-### Upload the function to fission
-$ fission function create --name register-ticket --env go-env --package function.so
+- Upload the function to fission
+`$ fission function create --name register-ticket --env go-env --package function.so`
 
-### Map /register-ticket to the register-ticket function
-$ fission route create --method POST --url /register-ticket --function register-ticket
+- Map /register-ticket to the register-ticket function
+`$ fission route create --method POST --url /register-ticket --function register-ticket`
 
-### Run the function
-$ curl -d `{"ticket": {"subject": "My printer is on fire!", "comment": {"body": "The smoke is very colorful."}}}` -H "Content-Type: application/json" -X POST http://$FISSION_ROUTER/register-ticket
+- Run the function
+```$ curl -d `{"ticket": {"subject": "My printer is on fire!", "comment": {"body": "The smoke is very colorful."}}}` -H "Content-Type: application/json" -X POST http://$FISSION_ROUTER/register-ticket```
 
 2. Deploy as AWS Lambda
