@@ -1,13 +1,18 @@
+// Package main here provide implementation of Zendesk Create Ticket API
+// https://developer.zendesk.com/rest_api/docs/core/tickets
+
 package main
 
-/*
-This API would accept JSON string as POST body and
-create a Ticket in Zen Desk/Fresh Desk
+//
+// Package This API would accept JSON string as POST body and
+// create a Ticket in Zen Desk/Fresh Desk
 
-INPUT - Zen Desk Create Ticket compliant JSON
-
-OUTPUT - Ticket Meta Data JSON from Response Object
-{
+// INPUT - Zen Desk Create Ticket compliant JSON
+//
+// 	{"ticket": {"subject": "My printer is on fire!", "comment": {"body": "The smoke is very colorful."}}}
+//
+// OUTPUT - Ticket Meta Data JSON from Response Object caontaining Ticket ID and other info
+/*{
 	"id": 133382282992,
 	"ticket_id": 39,
 	"created_at": "2017-10-25T18:32:55Z",
@@ -21,8 +26,8 @@ OUTPUT - Ticket Meta Data JSON from Response Object
 	},
 	"custom": {}
 	}
-}
-*/
+}*/
+//
 import (
 	"bytes"
 	"encoding/json"
@@ -38,25 +43,28 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-//Default values
+// Default values
 var (
-	endPoint     = "https://landg.zendesk.com/api/v2/tickets.json"
-	apiKey       = ""
-	apiPassword  = ""
-	namesapce    = "default"
-	secretName   = "zendesk-secret"
-	REDIS_SERVER = "redis-redis.redis.svc.cluster.local:6379"
-	TCP          = "tcp"
+	endPoint     = "https://landg.zendesk.com/api/v2/tickets.json" //Zendesk create ticket API endpoint
+	apiKey       = ""                                              //zendesk API Key
+	apiPassword  = ""                                              //zendesk API Key
+	namespace    = "default"                                       //Kubernetes virtual clusters Name to read secrets
+	secretName   = "zendesk-secret"                                // secret name
+	REDIS_SERVER = "redis-redis.redis.svc.cluster.local:6379"      // redis db end point
+	TCP          = "tcp"                                           //redis db con protocol
 )
 
+// Handler - this is main function, which will to prcess the incoming data
+// and create ticket in Zendesk
 func Handler(w http.ResponseWriter, r *http.Request) {
 
 	println("Executing Register Ticket API end point...", endPoint)
-
+	//create buffer copy of post data
 	buf, _ := ioutil.ReadAll(r.Body)
 	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
 	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
 
+	//transform incoming data to TicketDetails Object
 	var ticketResponseJSON []byte
 	ticketDetails := TicketDetails{}
 	err := json.NewDecoder(rdr1).Decode(&ticketDetails)
@@ -67,20 +75,21 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	println("Submission ID to be validated ---> " + ticketDetails.Ticket.EventID)
 
-	//check if ticker registered for this submission
+	//duplicate check : check if ticket is already registered for this submission
 	if validateRecord(w, ticketDetails.Ticket.EventID) == 1 {
-		//get API keys
+		//get API keys from Kubernetes Secrets
 		getAPIKeys(w)
 
+		//setup request to create zendesk ticket
 		req, err := http.NewRequest("POST", endPoint, rdr2)
 		req.Header.Add("Content-Type", "application/json")
 		req.SetBasicAuth(apiKey, apiPassword)
 		client := &http.Client{}
 		zendeskAPIResp, err := client.Do(req)
-		if err != nil {
+		if err != nil { // create error response call was not successful
 			createErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
-		} else if zendeskAPIResp.StatusCode != 201 {
+		} else if zendeskAPIResp.StatusCode != 201 { // if ticket not created
 			println("request status for ticket creation :" + zendeskAPIResp.Status)
 			switch zendeskAPIResp.StatusCode {
 			case 401:
@@ -90,6 +99,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
+
+		//transform Zendesk response
 		var ticketResponse TicketResponse
 		err = json.NewDecoder(zendeskAPIResp.Body).Decode(&ticketResponse)
 		if err != nil || ticketResponse == (TicketResponse{}) {
@@ -106,13 +117,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
+		// on duplicate attempt send custom message
 		ticketResponseJSON = []byte(`{"status":208,"message":"ticket Already created"}`)
 	}
 	w.Header().Set("content-type", "application/json")
 	w.Write([]byte(ticketResponseJSON))
 }
 
-//this function stores submissionID to Redis DB
+// validateRecord this function stores submissionID to Redis DB
 // in a SET, return 1 if inserted , 0 if already exists
 func validateRecord(w http.ResponseWriter, submissionID string) int {
 
@@ -139,6 +151,8 @@ func validateRecord(w http.ResponseWriter, submissionID string) int {
 	return noOfRecord
 }
 
+// createErrorResponse - this function forms a error reposne with
+// error message and http code
 func createErrorResponse(w http.ResponseWriter, message string, status int) {
 	errorJSON, _ := json.Marshal(&Error{
 		Status:  status,
@@ -149,17 +163,20 @@ func createErrorResponse(w http.ResponseWriter, message string, status int) {
 	w.Write([]byte(errorJSON))
 }
 
+// Error - error object
 type Error struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
 
-func main() {
-	println("staritng app.. :8085")
-	http.HandleFunc("/", Handler)
-	http.ListenAndServe(":8085", nil)
-}
+// func main() {
+// 	println("staritng app.. :8085")
+// 	http.HandleFunc("/", Handler)
+// 	http.ListenAndServe(":8085", nil)
+// }
 
+// getAPIKeys - this funtion read kubernetes secrets for configured
+// namespace and secret name
 func getAPIKeys(w http.ResponseWriter) {
 	println("[CONFIG] Reading Env variables")
 
@@ -174,17 +191,15 @@ func getAPIKeys(w http.ResponseWriter) {
 		panic(err.Error())
 	}
 
-	secret, err := clientset.Core().Secrets(namesapce).Get(secretName, meta_v1.GetOptions{})
+	//read kubernetes secrets
+	secret, err := clientset.Core().Secrets(namespace).Get(secretName, meta_v1.GetOptions{})
 	println(len(string(secret.Data["apiKey"])))
 
 	//endPointFromENV := os.Getenv("ENV_HELPDESK_API_EP")
 	apiKey = string(secret.Data["apiKey"])
 	apiPassword = string(secret.Data["password"])
 
-	// if len(endPointFromENV) > 0 {
-	// 	log.Print("[CONFIG] Setting Env variables", endPointFromENV)
-	// 	endPoint = endPointFromENV
-	// }
+	//validate if apiKey and apiPassword exist
 	if len(apiKey) == 0 {
 		createErrorResponse(w, "Missing API Key", http.StatusBadRequest)
 	}
@@ -194,6 +209,7 @@ func getAPIKeys(w http.ResponseWriter) {
 
 }
 
+// TicketResponse - Zendesk Response
 type TicketResponse struct {
 	Ticket struct {
 		URL        string      `json:"url,omitempty"`
@@ -223,6 +239,7 @@ type TicketResponse struct {
 	} `json:"audit"`
 }
 
+// TicketDetails - this defines the Request Payload
 type TicketDetails struct {
 	Status int `json:"status"`
 	Ticket struct {
@@ -249,6 +266,7 @@ type TicketDetails struct {
 	} `json:"ticket"`
 }
 
+// CustomFields - this is for custom field in Zendesk
 type CustomFields struct {
 	ID    int64  `json:"id"`
 	Value string `json:"value"`
