@@ -86,7 +86,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		req.SetBasicAuth(apiKey, apiPassword)
 		client := &http.Client{}
 		zendeskAPIResp, err := client.Do(req)
-		if err != nil { // create error response call was not successful
+		if err != nil { // create error response if call is not successful
 			createErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		} else if zendeskAPIResp.StatusCode != 201 { // if ticket not created
